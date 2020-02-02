@@ -230,14 +230,15 @@ class TektronixDPO4104BCommands(object):
     ACQUISITON_MODE = "ACQuire:STOPAfter"
     N_ACQUISITIONS = query("ACQuire:NUMACq")
 
+
 class RhodeSchwarzRTO1044Commands(object):
     """
     Namespace for the commands for the RhodeSchwarz oscilloscope
     """
-    CH1 = "CHAN1"
-    CH2 = "CHAN2"
-    CH3 = "CHAN3"
-    CH4 = "CHAN4"
+    CH1 = "CHANnel1"
+    CH2 = "CHANnel2"
+    CH3 = "CHANnel3"
+    CH4 = "CHANnel4"
     WAVEFORM = "DATA?"
     WF_HEADER = "DATA:HEADer?"
     CURVE = "DATA:VALues?"
@@ -245,6 +246,7 @@ class RhodeSchwarzRTO1044Commands(object):
     RUN = "RUN"
     SINGLE = "SINGLE"
     STOP = "STOP"
+
 
 class KeysightE3631APowerSupplyCommands(object):
     """
