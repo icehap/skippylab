@@ -690,7 +690,7 @@ class TektronixDPO4104B(AbstractBaseOscilloscope):
                     +(np.ones(len(waveform))*header["yzero"])
 
         waveform = np.array(waveform, dtype=np.float32)
-        print (waveform)
+        # print (waveform)
         return waveform
 
     def set_acquisition_window(self, start, stop):
