@@ -1030,3 +1030,42 @@ class RohdeSchwarzRTM3004(RhodeSchwarzRTO1044):
         volts = np.array(raw_wf.split(','), dtype=float)
         return volts
 
+class RohdeSchwarzRTB2004(RhodeSchwarzRTO1044):
+    """
+    Made by Rohde&Schwarz, scope with sampling rate up to 5GSamples/s
+    """
+
+    def acquire_waveform(self, channel=None, times=None):
+        """
+        Get the voltage values for a single waveform
+
+        Returns:
+            np.ndarray
+        """
+        if channel is not None:
+            self.select_channel(channel)
+
+        wf_command = ':'.join([self.active_channel, RSCmd.WAVEFORM])
+        raw_wf = self._send(wf_command)
+        volts = self._convert_wf(raw_wf)
+
+        if times is None:
+            header_cmd = ':'.join([self.active_channel, RSCmd.WF_HEADER])
+            metadata = self._send(header_cmd)
+            times = self._convert_metadata(metadata)
+
+        return times, volts
+
+    def _convert_metadata(self, metadata):
+        # XStart in s
+        # XStop in s
+        # Record length of the waveform in Samples
+        # Number of values per sample interval, usually 1
+        metadata = np.array(metadata.split(','), dtype=float)
+        times = np.linspace(*metadata[:-1])
+        return times
+
+    def _convert_wf(self, raw_wf):
+        volts = np.array(raw_wf.split(','), dtype=float)
+        return volts
+
