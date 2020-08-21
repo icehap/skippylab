@@ -15,6 +15,7 @@ from .. scpi import commands as cmd
 from .. import loggers
 from .. import plotting
 from .. import tools
+from .settings import DEF_OSC_SETTINGS
 
 from copy import copy
 
@@ -84,6 +85,16 @@ class AbstractBaseOscilloscope(with_metaclass(abc.ABCMeta, object)):
         self.instrument = vxi11.Instrument(ip)
         self.active_channel = None
         self.logger = loggers.get_logger(loglevel)
+
+        self.setup_def_settings(DEF_OSC_SETTINGS)
+
+    def setup_def_settings(self, settings):
+        for setting_i in settings:
+            try:
+                self._set(setting_i)
+            except:
+                print('Setting {} did not work for this scope!'.format(
+                    setting_i))
 
     def reopen_socket(self):
         """
@@ -679,7 +690,7 @@ class TektronixDPO4104B(AbstractBaseOscilloscope):
                     +(np.ones(len(waveform))*header["yzero"])
 
         waveform = np.array(waveform, dtype=np.float32)
-        print (waveform)
+        # print (waveform)
         return waveform
 
     def set_acquisition_window(self, start, stop):
@@ -978,4 +989,83 @@ class RhodeSchwarzRTO1044(AbstractBaseOscilloscope):
         nacq = self._send(RSCmd.N_ACQUISITONS)
         interval = time.monotonic() - self.run_start_time
         return float(nacq/interval)
+
+
+class RohdeSchwarzRTM3004(RhodeSchwarzRTO1044):
+    """
+    Made by Rohde&Schwarz, scope with sampling rate up to 5GSamples/s
+    """
+
+    def acquire_waveform(self, channel=None, times=None):
+        """
+        Get the voltage values for a single waveform
+
+        Returns:
+            np.ndarray
+        """
+        if channel is not None:
+            self.select_channel(channel)
+
+        wf_command = ':'.join([self.active_channel, RSCmd.WAVEFORM])
+        raw_wf = self._send(wf_command)
+        volts = self._convert_wf(raw_wf)
+
+        if times is None:
+            header_cmd = ':'.join([self.active_channel, RSCmd.WF_HEADER])
+            metadata = self._send(header_cmd)
+            times = self._convert_metadata(metadata)
+
+        return times, volts
+
+    def _convert_metadata(self, metadata):
+        # XStart in s
+        # XStop in s
+        # Record length of the waveform in Samples
+        # Number of values per sample interval, usually 1
+        metadata = np.array(metadata.split(','), dtype=float)
+        times = np.linspace(*metadata[:-1])
+        return times
+
+    def _convert_wf(self, raw_wf):
+        volts = np.array(raw_wf.split(','), dtype=float)
+        return volts
+
+class RohdeSchwarzRTB2004(RhodeSchwarzRTO1044):
+    """
+    Made by Rohde&Schwarz, scope with sampling rate up to 5GSamples/s
+    """
+
+    def acquire_waveform(self, channel=None, times=None):
+        """
+        Get the voltage values for a single waveform
+
+        Returns:
+            np.ndarray
+        """
+        if channel is not None:
+            self.select_channel(channel)
+
+        wf_command = ':'.join([self.active_channel, RSCmd.WAVEFORM])
+        raw_wf = self._send(wf_command)
+        volts = self._convert_wf(raw_wf)
+
+        if times is None:
+            header_cmd = ':'.join([self.active_channel, RSCmd.WF_HEADER])
+            metadata = self._send(header_cmd)
+            times = self._convert_metadata(metadata)
+
+        return times, volts
+
+    def _convert_metadata(self, metadata):
+        # XStart in s
+        # XStop in s
+        # Record length of the waveform in Samples
+        # Number of values per sample interval, usually 1
+        metadata = np.array(metadata.split(','), dtype=float)
+        times = np.linspace(*metadata[:-1])
+        return times
+
+    def _convert_wf(self, raw_wf):
+        volts = np.array(raw_wf.split(','), dtype=float)
+        return volts
 
