@@ -55,3 +55,42 @@ class Agilent3322OAFunctionGenerator(object):
     def __del__(self):
         self.instrument.close()
 
+class Agilent3101CFunctionGenerator(object):
+    """
+    """
+    #output = setget(KCmd.OUTPUT)
+
+    def __init__(self, ip="10.25.124.252", gpib_address=10, loglevel=20):
+        """
+        Connect to the power supply via Prologix GPIB connector
+
+        Keyword Args:
+            ip (str): IP adress of the Prologix GPIB connector
+            gpib_address (int): The GPIB address of the power supply
+                                connected to the Prologix connector
+        """
+        gpib = PrologixGPIBEthernet(ip)
+        gpib.connect()
+        gpib.select(gpib_address)
+        self.logger = loggers.get_logger(loglevel)
+        self.instrument = gpib
+        #self.P6 = KCmd.P6
+        #self.P25 = KCmd.P25
+        #self.N25 = KCmd.N25
+
+    '''
+    CH1 = "CH1"
+    CH2 = "CH2"
+    CH3 = "CH3"
+    CH4 = "CH4"
+    ON = "ON"
+    OFF = "OFF"
+    '''
+
+    def __del__(self):
+        self.instrument.close()
+
+    def get_ID(self):
+        return self.instrument.query('*IDN?')
+
+    #def
