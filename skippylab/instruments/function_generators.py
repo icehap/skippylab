@@ -9,6 +9,7 @@ from . import oscilloscopes as osci
 from ..scpi import commands as cmd
 from .. import loggers
 from math import sqrt,log10
+import pprint
 
 try:
     from plx_gpib_ethernet import PrologixGPIBEthernet
@@ -29,6 +30,15 @@ setget = osci.setget
 #KCmd = cmd.Agilent3322OACommands
 
 q = cmd.query
+
+
+def format_docstring(fmt, indent):
+    def wrapper(func):
+        pretty_fmt = pprint.pformat(fmt, indent)
+        func.__doc__ = func.__doc__.format(pretty_fmt)
+        return func
+    return wrapper
+
 
 class Agilent3322OAFunctionGenerator(object):
     """
@@ -194,6 +204,7 @@ class Agilent3101CFunctionGenerator(object):
         '''
         self.instrument.write(f'source1:FREQUENCY {value}MHZ')
 
+    @format_docstring(list(SHAPES.keys()), indent=12)
     def waveform_shape(self, value):
         '''
         Change the shape of the waveform.
@@ -201,21 +212,12 @@ class Agilent3101CFunctionGenerator(object):
         Parameters
         ----------
         value : string
-            Can take the arguments:
-            'sinusoidal': 'SIN',
-            'square': 'SQU',
-            'pulse': 'PULS',
-            'ramp': 'RAMP',
-            'prnoise': 'PRN',
-            'dc': 'DC',
-            'sinc': 'SINC',
-            'gaussian': 'GAUS',
-            'lorentz': 'LOR',
-            'erise': 'ERIS',
-            'edecay': 'EDEC',
-            'haversine': 'HAV'
+            Can take the arguments:\n{}
         '''
-        self.instrument.write(f'source1:function:shape {value}')
+        if value not in SHAPE.keys():
+            raise ValueError(f'{value} is not a valid shape. Please select a ' +
+                             f'shape from {SHAPE.keys()}.')
+        self.instrument.write(f'source1:function:shape {SHAPE[value]}')
 
     def burst_mode(self, value):
         '''
@@ -240,10 +242,10 @@ class Agilent3101CFunctionGenerator(object):
     def disable(self):
         self.instrument.write("output1:state off")
 
-    def waveform(self, shape='SIN', frequency=1e6, units='VPP',
+    def waveform(self, shape='sinusoidal', frequency=1e6, units='VPP',
                  amplitude=1, offset=0):
         '''General setting method for a complete wavefunction'''
-        self.instrument.write(f'source1:function:shape {shape}')
+        self.waveform_shape(shape)
         self.instrument.write(f'source1:frequency {frequency}')
         self.instrument.write(f'source1:voltage:unit {units}')
         self.instrument.write(f'source1:voltage:amplitude {amplitude}{units}')
