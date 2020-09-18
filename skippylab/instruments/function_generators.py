@@ -202,7 +202,7 @@ class Agilent3101CFunctionGenerator(object):
         value : double
             Frequency value to set in MHz.
         '''
-        self.instrument.write(f'source1:FREQUENCY {value}MHZ')
+        self.instrument.write(f'source1:frequency {value}')
 
     @format_docstring(list(SHAPES.keys()), indent=12)
     def waveform_shape(self, value):
@@ -251,9 +251,11 @@ class Agilent3101CFunctionGenerator(object):
         self.instrument.write(f'source1:voltage:amplitude {amplitude}{units}')
         self.instrument.write(f'source1:voltage:offset {offset}')
 
-    def test(self):
+    def startup(self):
         '''
         This function will magically setup the function generator for a basic run.
+
+        Will reset the instrument and generate a square pulse with 3 Volts in amplitude at 1kHz.
         '''
         self.reset_instrument()
         self.enable()
