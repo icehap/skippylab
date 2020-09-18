@@ -200,7 +200,7 @@ class Agilent3101CFunctionGenerator(object):
         Parameters
         ----------
         value : double
-            Frequency value to set in MHz.
+            Frequency value to set in Hz.
         '''
         self.instrument.write(f'source1:frequency {value}')
 
@@ -244,7 +244,23 @@ class Agilent3101CFunctionGenerator(object):
 
     def waveform(self, shape='sinusoidal', frequency=1e6, units='VPP',
                  amplitude=1, offset=0):
-        '''General setting method for a complete wavefunction'''
+        '''
+        General setting method for a complete wavefunction
+
+        Parameters
+        ----------
+        shape : string
+            Type of waveform. Default sinusoidal.
+
+        frequency : double
+            Frequency given in Hz. Default 1e6 Hz.
+
+        amplitude : double
+            Amplitude given in Volts. Default 1 Volt
+
+        offset : double
+            Default 0.
+        '''
         self.waveform_shape(shape)
         self.instrument.write(f'source1:frequency {frequency}')
         self.instrument.write(f'source1:voltage:unit {units}')
@@ -255,7 +271,12 @@ class Agilent3101CFunctionGenerator(object):
         '''
         This function will magically setup the function generator for a basic run.
 
-        Will reset the instrument and generate a square pulse with 3 Volts in amplitude at 1kHz.
+        Startup that will reset the instrument and generate a square pulse with 3 Volts in amplitude at 1kHz.
+
+        Includes a factory reset function, best to use only from time to time.
+        Every time the reset is done, this device causes an extra voltage to be applied. This is what clears
+        the memeory or other elements. If done frequently, it could overheat and cause the bits to get over
+        heated and become unstable. In the long term, it could damage the device.
         '''
         self.reset_instrument()
         self.enable()
