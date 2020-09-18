@@ -82,7 +82,7 @@ class Agilent3101CFunctionGenerator(object):
         'edecay': 'EDEC',
         'haversine': 'HAV'
     }
-    FREQ_LIMIT = [1e-6, 150e6] #Frequeny limit for sinusoidal function
+    FREQ_LIMIT = [1e-6, 150e6] #Frequeny limit for sinusoidal function in Hz
     DUTY_LIMIT = [0.001, 99.999]
     AMPLITUDE_LIMIT = {
         'VPP': [20e-3, 10],
@@ -107,7 +107,7 @@ class Agilent3101CFunctionGenerator(object):
             gpib_address (int): The GPIB address of the power supply
                                 connected to the Prologix connector
         """
-        gpib = PrologixGPIBEthernet(ip, timeout=10)
+        gpib = PrologixGPIBEthernet(ip, timeout=15)
         gpib.connect()
         gpib.select(gpib_address)
         self.logger = loggers.get_logger(loglevel)
@@ -118,7 +118,7 @@ class Agilent3101CFunctionGenerator(object):
 
     def get_ID(self):
         ''' Requests and returns the identification of the instrument.'''
-        return self.instrument.query('*IDN?')
+        return self.instrument.write('*IDN?')
 
     def reset_instrument(self):
         ''' Resets the instrument to the factory default settings.
@@ -214,10 +214,10 @@ class Agilent3101CFunctionGenerator(object):
         value : string
             Can take the arguments:\n{}
         '''
-        if value not in SHAPE.keys():
+        if value not in self.SHAPES.keys():
             raise ValueError(f'{value} is not a valid shape. Please select a ' +
-                             f'shape from {SHAPE.keys()}.')
-        self.instrument.write(f'source1:function:shape {SHAPE[value]}')
+                             f'shape from {self.SHAPES.keys()}.')
+        self.instrument.write(f'source1:function:shape {self.SHAPES[value]}')
 
     def burst_mode(self, value):
         '''
@@ -250,3 +250,17 @@ class Agilent3101CFunctionGenerator(object):
         self.instrument.write(f'source1:voltage:unit {units}')
         self.instrument.write(f'source1:voltage:amplitude {amplitude}{units}')
         self.instrument.write(f'source1:voltage:offset {offset}')
+
+    def test(self):
+        '''
+        This function will magically setup the function generator for a basic run.
+        '''
+        self.reset_instrument()
+        self.enable()
+        self.waveform(shape='square', amplitude=3, frequency=1e3)
+
+    def modulate_waveform(self, value):
+        '''
+        This command uses the  pulse-width modulation (PWM) to create pulse-width modulated signals.
+        The signal can be further characterized by the duty cycle, which is the ratio of the <<on>> time divided by the period.
+        '''
