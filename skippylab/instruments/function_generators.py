@@ -233,6 +233,9 @@ class Agilent3101CFunctionGenerator(object):
         self.instrument.write('source1:BURSt:STATe ON')
         self.instrument.write(f'source1:BURSt:NCYCles {value}')
 
+    def burst_mode_end(self):
+        self.instrument.write('source1:BURSt:STATe OFF')
+
     def beep(self):
         self.instrument.write("system:beep")
 
@@ -275,7 +278,7 @@ class Agilent3101CFunctionGenerator(object):
 
         Includes a factory reset function, best to use only from time to time.
         Every time the reset is done, this device causes an extra voltage to be applied. This is what clears
-        the memeory or other elements. If done frequently, it could overheat and cause the bits to get over
+        the memory or other elements. If done frequently, it could overheat and cause the bits to get over
         heated and become unstable. In the long term, it could damage the device.
         '''
         self.reset_instrument()
