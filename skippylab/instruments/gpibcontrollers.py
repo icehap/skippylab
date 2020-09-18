@@ -13,14 +13,14 @@ except ImportError as e:
 
 def prologix_gpib_ethernet_provider(ip, gpib_addres):
     """
-    Provide a vxi11 compatible instrument which is accesible 
-    transparently through its ip.    
+    Provide a vxi11 compatible instrument which is accesible
+    transparently through its ip.
 
     Args:
         ip (str): ip address of the controller
         gpib_address (str): gpib adress of the instrument
 
-    Returns: 
+    Returns:
         vxi11.instrument
     """
     instrument = PrologixGPIBEthernet(ip)
@@ -28,4 +28,3 @@ def prologix_gpib_ethernet_provider(ip, gpib_addres):
     gpib.select(gpib_address)
 
     return gpib
-
