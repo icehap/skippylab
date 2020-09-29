@@ -253,7 +253,7 @@ class Agilent3101CFunctionGenerator(object):
     def disable(self):
         self.instrument.write("output1:state off")
 
-    @format_docstring(list(AMPLITUDE_LIMIT.keys()), indent=12)
+    @format_docstring(AMPLITUDE_LIMIT, indent=12)
     def waveform(self, shape='sinusoidal', frequency=1e6, units='VPP',
                  amplitude=1, offset=0):
         '''
@@ -269,7 +269,8 @@ class Agilent3101CFunctionGenerator(object):
 
         units : string
             The units used depend on the limits.
-            Allowed units for the signal voltage include:\n{}
+            Allowed units for the signal voltage include:
+            {}
 
         amplitude : double
             Amplitude given in Volts. Default 1 Volt
