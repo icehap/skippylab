@@ -107,9 +107,18 @@ class Agilent3101CFunctionGenerator(object):
             gpib_address (int): The GPIB address of the power supply
                                 connected to the Prologix connector
         """
-        gpib = PrologixGPIBEthernet(ip, timeout=15)
-        gpib.connect()
-        gpib.select(gpib_address)
+
+        try:
+            gpib = PrologixGPIBEthernet(ip, timeout=15)
+            gpib.connect()
+        except ImportError:
+            raise ValueError('Connection to plx_gpib_ethernet failed, check connection!')
+
+        try:
+            gpib.select(gpib_address)
+        except ImportError:
+            raise ValueError('Connection to plx_gpib_ethernet failed, check IP address!')
+
         self.logger = loggers.get_logger(loglevel)
         self.instrument = gpib
 
@@ -275,18 +284,20 @@ class Agilent3101CFunctionGenerator(object):
         This function will magically setup the function generator for a basic run.
 
         Startup that will reset the instrument and generate a square pulse with 3 Volts in amplitude at 1kHz.
-
-        Includes a factory reset function, best to use only from time to time.
-        Every time the reset is done, this device causes an extra voltage to be applied. This is what clears
-        the memory or other elements. If done frequently, it could overheat and cause the bits to get over
-        heated and become unstable. In the long term, it could damage the device.
         '''
-        self.reset_instrument()
-        self.enable()
+        self.disable()
+        print('Cheking the function generator response...')
+        try:
+            self.waveform(shape='sinusoidal')
+            time.sleep(5)
+        except Warning:
+            print('Something went wrong... Check Function generator and connections! Is the function generator on?')
+        print('Generating a 3V square pulse at 1kHz.')
         self.waveform(shape='square', amplitude=3, frequency=1e3)
+        self.enable()
 
-    def modulate_waveform(self, value):
-        '''
-        This command uses the  pulse-width modulation (PWM) to create pulse-width modulated signals.
-        The signal can be further characterized by the duty cycle, which is the ratio of the <<on>> time divided by the period.
-        '''
+    #def modulate_waveform(self, value):
+    #    '''
+    #    This command uses the  pulse-width modulation (PWM) to create pulse-width modulated signals.
+    #    The signal can be further characterized by the duty cycle, which is the ratio of the <<on>> time divided by the period.
+    #    '''
