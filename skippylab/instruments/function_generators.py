@@ -67,7 +67,6 @@ class Agilent3322OAFunctionGenerator(object):
         self.instrument.close()
 
 class Agilent3101CFunctionGenerator(object):
-
     SHAPES = {
         'sinusoidal': 'SIN',
         'square': 'SQU',
@@ -111,12 +110,12 @@ class Agilent3101CFunctionGenerator(object):
         try:
             gpib = PrologixGPIBEthernet(ip, timeout=15)
             gpib.connect()
-        except ImportError:
+        except OSError:
             raise ValueError('Connection to plx_gpib_ethernet failed, check connection!')
 
         try:
             gpib.select(gpib_address)
-        except ImportError:
+        except OSError:
             raise ValueError('Connection to plx_gpib_ethernet failed, check IP address!')
 
         self.logger = loggers.get_logger(loglevel)
@@ -254,6 +253,7 @@ class Agilent3101CFunctionGenerator(object):
     def disable(self):
         self.instrument.write("output1:state off")
 
+    @format_docstring(list(AMPLITUDE_LIMIT.keys()), indent=12)
     def waveform(self, shape='sinusoidal', frequency=1e6, units='VPP',
                  amplitude=1, offset=0):
         '''
@@ -266,6 +266,10 @@ class Agilent3101CFunctionGenerator(object):
 
         frequency : double
             Frequency given in Hz. Default 1e6 Hz.
+
+        units : string
+            The units used depend on the limits.
+            Allowed units for the signal voltage include:\n{}
 
         amplitude : double
             Amplitude given in Volts. Default 1 Volt
@@ -289,7 +293,7 @@ class Agilent3101CFunctionGenerator(object):
         print('Cheking the function generator response...')
         try:
             self.waveform(shape='sinusoidal')
-            time.sleep(5)
+            time.sleep(1)
         except Warning:
             print('Something went wrong... Check Function generator and connections! Is the function generator on?')
         print('Generating a 3V square pulse at 1kHz.')
