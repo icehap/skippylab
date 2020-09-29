@@ -67,7 +67,6 @@ class Agilent3322OAFunctionGenerator(object):
         self.instrument.close()
 
 class Agilent3101CFunctionGenerator(object):
-
     SHAPES = {
         'sinusoidal': 'SIN',
         'square': 'SQU',
@@ -82,7 +81,7 @@ class Agilent3101CFunctionGenerator(object):
         'edecay': 'EDEC',
         'haversine': 'HAV'
     }
-    FREQ_LIMIT = [1e-6, 150e6] #Frequeny limit for sinusoidal function
+    FREQ_LIMIT = [1e-6, 150e6] #Frequeny limit for sinusoidal function in Hz
     DUTY_LIMIT = [0.001, 99.999]
     AMPLITUDE_LIMIT = {
         'VPP': [20e-3, 10],
@@ -107,9 +106,18 @@ class Agilent3101CFunctionGenerator(object):
             gpib_address (int): The GPIB address of the power supply
                                 connected to the Prologix connector
         """
-        gpib = PrologixGPIBEthernet(ip, timeout=10)
-        gpib.connect()
-        gpib.select(gpib_address)
+
+        try:
+            gpib = PrologixGPIBEthernet(ip, timeout=15)
+            gpib.connect()
+        except OSError:
+            raise ValueError('Connection to plx_gpib_ethernet failed, check connection!')
+
+        try:
+            gpib.select(gpib_address)
+        except OSError:
+            raise ValueError('Connection to plx_gpib_ethernet failed, check IP address!')
+
         self.logger = loggers.get_logger(loglevel)
         self.instrument = gpib
 
@@ -118,7 +126,7 @@ class Agilent3101CFunctionGenerator(object):
 
     def get_ID(self):
         ''' Requests and returns the identification of the instrument.'''
-        return self.instrument.query('*IDN?')
+        return self.instrument.write('*IDN?')
 
     def reset_instrument(self):
         ''' Resets the instrument to the factory default settings.
@@ -200,9 +208,9 @@ class Agilent3101CFunctionGenerator(object):
         Parameters
         ----------
         value : double
-            Frequency value to set in MHz.
+            Frequency value to set in Hz.
         '''
-        self.instrument.write(f'source1:FREQUENCY {value}MHZ')
+        self.instrument.write(f'source1:frequency {value}')
 
     @format_docstring(list(SHAPES.keys()), indent=12)
     def waveform_shape(self, value):
@@ -214,10 +222,10 @@ class Agilent3101CFunctionGenerator(object):
         value : string
             Can take the arguments:\n{}
         '''
-        if value not in SHAPE.keys():
+        if value not in self.SHAPES.keys():
             raise ValueError(f'{value} is not a valid shape. Please select a ' +
-                             f'shape from {SHAPE.keys()}.')
-        self.instrument.write(f'source1:function:shape {SHAPE[value]}')
+                             f'shape from {self.SHAPES.keys()}.')
+        self.instrument.write(f'source1:function:shape {self.SHAPES[value]}')
 
     def burst_mode(self, value):
         '''
@@ -233,6 +241,9 @@ class Agilent3101CFunctionGenerator(object):
         self.instrument.write('source1:BURSt:STATe ON')
         self.instrument.write(f'source1:BURSt:NCYCles {value}')
 
+    def burst_mode_end(self):
+        self.instrument.write('source1:BURSt:STATe OFF')
+
     def beep(self):
         self.instrument.write("system:beep")
 
@@ -242,11 +253,56 @@ class Agilent3101CFunctionGenerator(object):
     def disable(self):
         self.instrument.write("output1:state off")
 
+    @format_docstring(AMPLITUDE_LIMIT, indent=12)
     def waveform(self, shape='sinusoidal', frequency=1e6, units='VPP',
                  amplitude=1, offset=0):
-        '''General setting method for a complete wavefunction'''
+        '''
+        General setting method for a complete wavefunction
+
+        Parameters
+        ----------
+        shape : string
+            Type of waveform. Default sinusoidal.
+
+        frequency : double
+            Frequency given in Hz. Default 1e6 Hz.
+
+        units : string
+            The units used depend on the limits.
+            Allowed units for the signal voltage include:
+            {}
+
+        amplitude : double
+            Amplitude given in Volts. Default 1 Volt
+
+        offset : double
+            Default 0.
+        '''
         self.waveform_shape(shape)
         self.instrument.write(f'source1:frequency {frequency}')
         self.instrument.write(f'source1:voltage:unit {units}')
         self.instrument.write(f'source1:voltage:amplitude {amplitude}{units}')
         self.instrument.write(f'source1:voltage:offset {offset}')
+
+    def startup(self):
+        '''
+        This function will magically setup the function generator for a basic run.
+
+        Startup that will reset the instrument and generate a square pulse with 3 Volts in amplitude at 1kHz.
+        '''
+        self.disable()
+        print('Cheking the function generator response...')
+        try:
+            self.waveform(shape='sinusoidal')
+            time.sleep(1)
+        except Warning:
+            print('Something went wrong... Check Function generator and connections! Is the function generator on?')
+        print('Generating a 3V square pulse at 1kHz.')
+        self.waveform(shape='square', amplitude=3, frequency=1e3)
+        self.enable()
+
+    #def modulate_waveform(self, value):
+    #    '''
+    #    This command uses the  pulse-width modulation (PWM) to create pulse-width modulated signals.
+    #    The signal can be further characterized by the duty cycle, which is the ratio of the <<on>> time divided by the period.
+    #    '''
