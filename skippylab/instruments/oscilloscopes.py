@@ -1062,7 +1062,8 @@ class RohdeSchwarzRTB2004(RhodeSchwarzRTO1044):
         # Record length of the waveform in Samples
         # Number of values per sample interval, usually 1
         metadata = np.array(metadata.split(','), dtype=float)
-        times = np.linspace(*metadata[:-1])
+        n_samples = int(metadata[2])
+        times = np.linspace(*metadata[:-2], n_samples)
         return times
 
     def _convert_wf(self, raw_wf):
